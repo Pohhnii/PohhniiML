@@ -43,6 +43,43 @@ Use `.predict` to get predictions for more than one time-step.
 Use `.regression` to train the model.
 
 ## Examples
+
+### Linear-Regression-Model
+```javascript
+// Importing The Library
+const Pohhnii = require('./PohhniiML/Pohhnii');
+const rf = Pohhnii.MODELS.ReferenceFunctions; // refering to ReferenceFunctions
+// Creating the Model
+const Model = new rf.FunctionSystem();
+// Defining Parameters and setting the value to 0. addParameter() returns the reference to the variable as a String
+const X = Model.addParameter(0); // Input-Parameter
+const a = Model.addParameter(0); // Slope
+const b = Model.addParameter(0); // Y-Intercept
+// Defining the model and the relations between the Parameters
+Model.startWith(X).multiply(a).add(b); // f(x) = ax + b
+// Testing-Data
+const data = [
+    { x: -1, y: -1 }, { x: 0, y: 1 }, { x: 1, y: 3 }, { x: 2, y: 5 }
+];
+// Training the model for 100 Epochs
+for (let epochs = 0; epochs < 100; epochs++) {
+    // Looping over each data-point
+    for (let i = 0; i < data.length; i++) {
+        // Regression: Parameter-References, output-values, Learnrate, X-Reference, X-value
+        Model.regression([a, b], data[i].y, null, X, data[i].x);
+    }
+}
+// Getting the outputs-values of the function
+console.log(Model.valueOf(X, -1)); // Outputs -0.9999998380660966 => -1
+console.log(Model.valueOf(X, 0)); // Outputs 1.0000001026714367 => 1
+console.log(Model.valueOf(X, 1)); // Outputs 3.0000000434089698 => 3
+console.log(Model.valueOf(X, 2)); // Outputs 4.999999984146504 => 5
+// Getting the Values of the Parameter
+console.log(Model.getParameter(a).value); // Outputs 1.9999999407375333 => 2
+console.log(Model.getParameter(b).value); // Outputs 1.0000001026714367 => 1
+// => f(x) = 2x + 1
+```
+
 ### Simple Neural Network
 ```javascript
 // Importing The Library
