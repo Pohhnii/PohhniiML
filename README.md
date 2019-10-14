@@ -34,7 +34,7 @@ Function which creates an Object with a Model, a reference to the X-Matrix and a
 The model is a representation of a simple Neural Network with an input-layer, hidden-layer and output-layer.
 Use `.regression` to train the model.
 
-#### `Pohhnii.MODELS.ReferenceFunctions.Presets.SimpleRecurrentModel`
+##### `Pohhnii.MODELS.ReferenceFunctions.Presets.SimpleRecurrentModel`
 Function which returns a representation of a simple recurrent model.
 The model includes an input-layer, hidden-layer and output-layer. Furthermore the model has a recurrent-state and recurrent-layer.
 Use `.reset` to reset the model and the recurrent-state.
