@@ -41,3 +41,40 @@ Use `.reset` to reset the model and the recurrent-state.
 Use `.time_step` to get a prediction for one time-step.
 Use `.predict` to get predictions for more than one time-step.
 Use `.regression` to train the model.
+
+## Examples
+### Simple Neural Network
+```javascript
+// Importing The Library
+const Pohhnii = require('./PohhniiML/Pohhnii');
+const rf = Pohhnii.MODELS.ReferenceFunctions; // refering to ReferenceFunctions
+// Creating the Model with 2 input-nodes, 8 hidden-nodes and 1 output-node
+const { Model, X, Parameters } = rf.Presets.SimpleNN(2, 8, 1);
+// Model: MatrixFunction, X: Reference to the input-matrix, Parameters: References to each Parameter of the model
+// Input-Arrays, Representing the XOR-Problem
+const inputs = [
+    [0, 0],
+    [0, 1],
+    [1, 0],
+    [1, 1]
+];
+// Output-Arrays, Different inputs => 1, Same inputs => 0
+const outputs = [
+    [0], [1], [1], [0]
+];
+// Learnrate of the Neural Network
+const LearnRate = 0.5;
+// Training the Model for each outputs 3000 times.
+for (let epochs = 0; epochs < 3000; epochs++) {
+    //Parameters which will be trained, output-values, Learnrate, Reference to the input + value of the input.
+    Model.regression(Parameters, outputs[0], LearnRate, X, inputs[0]);
+    Model.regression(Parameters, outputs[1], LearnRate, X, inputs[1]);
+    Model.regression(Parameters, outputs[2], LearnRate, X, inputs[2]);
+    Model.regression(Parameters, outputs[3], LearnRate, X, inputs[3]);
+}
+// Getting the different outputs after the training
+console.log(Model.valueOf(X, inputs[0]).data); //Outputs [0.04554866979985465]
+console.log(Model.valueOf(X, inputs[1]).data); //Outputs [0.9369545968253754]
+console.log(Model.valueOf(X, inputs[2]).data); //Outputs [0.9375005566696424]
+console.log(Model.valueOf(X, inputs[3]).data); //Outputs [0.08844407604356203]
+```

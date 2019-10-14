@@ -1541,8 +1541,8 @@ Pohhnii.MODELS.ReferenceFunctions.MatrixFunction = class {
     /**
      * @description Trains the Model with regression and gradient descent. Returns the Mean-Squared-Error.
      * @param {Array<String>} parameter 
-     * @param {Matrix} y 
-     * @param {Number} learnrate 
+     * @param {Matrix|String|Array<Number>} y 
+     * @param {Number} learnrate Standard value: 0.05
      * @param  {...String|Array<Number>} matrices 
      * @returns {Number} mse
      */
@@ -1550,6 +1550,7 @@ Pohhnii.MODELS.ReferenceFunctions.MatrixFunction = class {
         if (learnrate === null || typeof learnrate === 'undefined' || typeof learnrate !== 'number') learnrate = 0.05;
         if (this.innerFunction === null || typeof this.innerFunction === 'undefined') throw console.error("The function has to be defined!");
         if (typeof y === 'string') y = this.getMatrix(y);
+        if (Array.isArray(y)) y = Pohhnii.MODELS.ReferenceFunctions.Matrix(this.innerFunction.rows, this.innerFunction.cols, y);
         let prediction = this.valueOf(...matrices);
         let errdata = [];
         for (let i = 0; i < prediction.data.length; i++) {
