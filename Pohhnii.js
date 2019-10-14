@@ -1063,7 +1063,7 @@ Pohhnii.MODELS.ReferenceFunctions.FunctionSystem = class {
      * @description Trains the model with regression by using gradient descent.
      * @param {Array<String>} parameter An array with the references to the parameters for the regressionanalysis
      * @param {Number} y The expected output value
-     * @param {Number} [learnrate=optional] the learnrate which will be multiplied with the error - can be null
+     * @param {Number} [learnrate=optional] the learnrate which will be multiplied with the error - can be null (Standard-value: 0.05)
      * @param  {...String|Number} [parameters=optional] parameter, value, ...
      * @returns {Number} Squared Error
      */
