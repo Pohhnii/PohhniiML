@@ -673,7 +673,6 @@ Pohhnii.MODELS.ReferenceFunctions.FunctionSystem = class {
     /**
      * @description Adds a Parameter to the value of the function.
      * @param {String} a 
-     * @param {String} [b=optional] 
      * @returns {Pohhnii.MODELS.ReferenceFunctions.FunctionSystem} this
      */
     add(a) {
@@ -697,7 +696,6 @@ Pohhnii.MODELS.ReferenceFunctions.FunctionSystem = class {
     /**
      * @description Subtracts a Parameter to the value of the function.
      * @param {String} a 
-     * @param {String} [b=optional] 
      * @returns {Pohhnii.MODELS.ReferenceFunctions.FunctionSystem} this
      */
     subtract(a) {
@@ -805,6 +803,7 @@ Pohhnii.MODELS.ReferenceFunctions.FunctionSystem = class {
             this.derivative = function (parameter, ref) {
                 let der = (typeof this.base === 'string') ? ((this.base === parameter) ? 1 : 0) : this.base.derivative(parameter, ref);
                 let val = (typeof this.base === 'string') ? ref.getParameter(this.base).value : this.base.valueOf(ref);
+                if (val === 0) return 0;
                 return this.power * Math.pow(val, this.power - 1) * der;
             }
         }
