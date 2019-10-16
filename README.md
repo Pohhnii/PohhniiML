@@ -143,3 +143,18 @@ console.log(Model.valueOf(X, inputs[1]).data); //Outputs [0.9369545968253754]
 console.log(Model.valueOf(X, inputs[2]).data); //Outputs [0.9375005566696424]
 console.log(Model.valueOf(X, inputs[3]).data); //Outputs [0.08844407604356203]
 ```
+#### This Model would be the same:
+```javascript
+// Creating the Model
+const Model = new rf.MatrixFunction();
+// Defining the Input-Matrix
+const X = Model.addMatrix(1, 2);
+// Array with the Parameters
+let Parameters = [];
+// Creating the Network with 2 inputs, 8 hidden and 1 output.
+Model.startWith(X).DenseLayer({ nodes: 8 }, (weights, bias) => {
+    Parameters.push(...Model.getRefMatrix(weights).data, ...Model.getRefMatrix(bias).data);
+}).Sigmoid().DenseLayer({ nodes: 1 }, (weights, bias) => {
+    Parameters.push(...Model.getRefMatrix(weights).data, ...Model.getRefMatrix(bias).data);
+}).Sigmoid();
+```

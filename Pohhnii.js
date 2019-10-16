@@ -1538,6 +1538,31 @@ Pohhnii.MODELS.ReferenceFunctions.MatrixFunction = class {
         return this;
     }
     /**
+     * @description Does Nothing.
+     * @returns {Pohhnii.MODELS.ReferenceFunctions.MatrixFunction} this
+     */
+    NONE() {
+        return this;
+    }
+    /**
+     * 
+     * @param {Object} config
+     * @param {Number} config.nodes
+     * @param {Number} [config.inputs=optional]
+     * @param {Function} cb
+     * @returns {Pohhnii.MODELS.ReferenceFunctions.MatrixFunction} this
+     */
+    DenseLayer(config, cb) {
+        let nodes = config.nodes;
+        let inputs = (typeof config.inputs === 'number') ? config.inputs : this.innerFunction.cols;
+        let Parameter = [];
+        Parameter[0] = this.addMatrix(inputs, nodes);
+        Parameter[1] = this.addMatrix(1, nodes);
+        this.MatrixProduct(Parameter[0]).add(Parameter[1]);
+        cb(Parameter[0], Parameter[1]);
+        return this;
+    }
+    /**
      * @description Trains the Model with regression and gradient descent. Returns the Mean-Squared-Error.
      * @param {Array<String>} parameter 
      * @param {Matrix|String|Array<Number>} y 
