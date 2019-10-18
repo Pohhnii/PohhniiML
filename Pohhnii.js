@@ -622,6 +622,7 @@ Pohhnii.MODELS.ReferenceFunctions.FunctionSystem = class {
      * @returns {String} UUID
      */
     addParameter(value) {
+        if (typeof value === 'undefined' || value === null) value = 0;
         return this.referenceObject.addParameter(value);
     }
     /**
