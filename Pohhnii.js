@@ -1466,6 +1466,58 @@ Pohhnii.MODELS.ReferenceFunctions.Presets.SimpleRecurrentModel = function (input
         }
     }
 }
+/**
+ * @description Class for structuring genetic algorithm
+ */
+Pohhnii.MODELS.Genetix = class {
+    /**
+     * @param {*} [Organism=optional] Array of organism in the genetic Model
+     */
+    constructor(Organism) {
+        this.Organism = Organism || [];
+        this.fitnessOf = function () { return 0; };
+        this.mutate = function (org) { return org; };
+    }
+    /**
+     * @description Sets the Array of organism
+     * @param {*} organism Array of organism in the genetic Model
+     */
+    setOrganism(organism) {
+        this.Organism = organism;
+    }
+    /**
+     * @description Sets the Function for calculating the fitness of a single Organism. The function takes a single Organism as a parameter.
+     * @param {Function} func 
+     */
+    setFitnessFunction(func) {
+        this.fitnessOf = func;
+    }
+    /**
+     * @description Sests the Function for mutating an organism. The function takes a single Organism as a parameter.
+     * @param {Function} func 
+     */
+    setMutationFunction(func) {
+        this.mutate = func;
+    }
+    /**
+     * @description Does a whole Lifecycle of the Organism. Includes generating a new generation by choosing the fittest organism and mutating that.
+     * @param {Function} func Function for doing the lifecycle and the tasks of the Organism.
+     * @returns {Promise}
+     */
+    lifeCycle(func) {
+        return new Promise((resolve, reject) => {
+            let lc = new Promise((res, rej) => {
+                func(res, rej);
+            }).then(() => {
+                const best = this.Organism.map(val => { return { Organism: val, Fitness: this.fitnessOf(val) }; }).sort((a, b) => { return (a.Fitness > b.Fitness) ? -1 : 1; })[0].Organism;
+                this.Organism = this.Organism.map((org, index) => {
+                    return (index === 0) ? org : this.mutate(org);
+                });
+                resolve(this.Organism);
+            });
+        });
+    }
+}
 
 //Exporting the Library
 if (typeof module !== 'undefined' && module.exports) module.exports = Pohhnii;
