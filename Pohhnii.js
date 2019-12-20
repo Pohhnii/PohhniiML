@@ -1503,6 +1503,13 @@ Pohhnii.MODELS.Genetix = class {
         this.Organism = organism;
     }
     /**
+     * @description Returns the array of the Organism. If index is given, the Organism with the index is returned.
+     * @param {Number} [index=optional] 
+     */
+    getOrganism(index) {
+        return (typeof index === 'undefined' || !index) ? this.Organism : this.Organism[index];
+    }
+    /**
      * @description Sets the Function for calculating the fitness of a single Organism. The function takes a single Organism as a parameter.
      * @param {Function} func 
      */
@@ -1526,13 +1533,20 @@ Pohhnii.MODELS.Genetix = class {
             let lc = new Promise((res, rej) => {
                 func(res, rej);
             }).then(() => {
-                const best = this.Organism.map(val => { return { Organism: val, Fitness: this.fitnessOf(val) }; }).sort((a, b) => { return (a.Fitness > b.Fitness) ? -1 : 1; })[0].Organism;
+                const best = this.getFittest();
                 this.Organism = this.Organism.map((org, index) => {
-                    return (index === 0) ? org : this.mutate(org);
+                    return (index === 0) ? best : this.mutate(best);
                 });
                 resolve(this.Organism);
             });
         });
+    }
+    /**
+     * @description Returns the fittest Organism.
+     * @returns {*} Organism
+     */
+    getFittest() {
+        return this.Organism.map(val => { return { Organism: val, Fitness: this.fitnessOf(val) }; }).sort((a, b) => { return (a.Fitness > b.Fitness) ? -1 : 1; })[0].Organism;
     }
 }
 
