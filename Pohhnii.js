@@ -867,6 +867,14 @@ Pohhnii.MODELS.ReferenceFunctions.MatrixFunction = class {
         }
     }
     /**
+     * @description Sets a Parameter with the given value.
+     * @param {String} id 
+     * @param {Number} data 
+     */
+    setParameter(id, data) {
+        this.getParameter(id).value = data;
+    }
+    /**
      * @description Removes a Parameter with the given id/UUID as Reference.
      * @param {String} id 
      */
