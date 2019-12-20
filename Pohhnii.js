@@ -1343,15 +1343,6 @@ Pohhnii.MODELS.ReferenceFunctions.Matrix = function (rows, cols, data) {
 Pohhnii.MODELS.ReferenceFunctions.Presets.SimpleNN = function (inputs, hidden, outputs) {
     let model = new Pohhnii.MODELS.ReferenceFunctions.MatrixFunction();
     let x = model.addMatrix(1, inputs, Pohhnii.MISC.initArray(inputs, 0));
-    // //hidden Layer
-    // let a = model.addMatrix(inputs, hidden, Pohhnii.MISC.initArray(inputs * hidden, 0));
-    // let b = model.addMatrix(1, hidden, Pohhnii.MISC.initArray(hidden, 0));
-    // //output layer
-    // let c = model.addMatrix(hidden, outputs, Pohhnii.MISC.initArray(outputs * hidden, 0));
-    // let d = model.addMatrix(1, outputs, Pohhnii.MISC.initArray(outputs, 0));
-    // //Model-Function
-    // model.startWith(x).MatrixProduct(a).add(b).Sigmoid().MatrixProduct(c).add(d).Sigmoid();
-    //List of all adjustable Parameters
     let hiddenLayer, hiddenBias, outputLayer, outputBias;
     model.startWith(x).DenseLayer({ nodes: hidden }, (w, b) => {
         hiddenLayer = w;
