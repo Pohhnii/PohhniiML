@@ -767,10 +767,19 @@ Pohhnii.MODELS.ReferenceFunctions.Presets.PolynomialFunction = function (grade) 
     }
 }
 /**
- * @description Initializes an array with a specific value.
+ * @description Initializes an array with a specific value or the values of a function.
+ * @param {Number} length
+ * @param {Number|Function} value
  * @returns {Array} array
  */
 Pohhnii.MISC.initArray = function (length, value) {
+    if (typeof value === 'function') {
+        let arr = [];
+        for (let i = 0; i < length; i++) {
+            arr[i] = value(i, arr);
+        }
+        return arr;
+    }
     let arr = [];
     for (let i = 0; i < length; i++) {
         arr[i] = value;
@@ -1334,24 +1343,33 @@ Pohhnii.MODELS.ReferenceFunctions.Matrix = function (rows, cols, data) {
 Pohhnii.MODELS.ReferenceFunctions.Presets.SimpleNN = function (inputs, hidden, outputs) {
     let model = new Pohhnii.MODELS.ReferenceFunctions.MatrixFunction();
     let x = model.addMatrix(1, inputs, Pohhnii.MISC.initArray(inputs, 0));
-    //hidden Layer
-    let a = model.addMatrix(inputs, hidden, Pohhnii.MISC.initArray(inputs * hidden, 0));
-    let b = model.addMatrix(1, hidden, Pohhnii.MISC.initArray(hidden, 0));
-    //output layer
-    let c = model.addMatrix(hidden, outputs, Pohhnii.MISC.initArray(outputs * hidden, 0));
-    let d = model.addMatrix(1, outputs, Pohhnii.MISC.initArray(outputs, 0));
-    //Model-Function
-    model.startWith(x).MatrixProduct(a).add(b).Sigmoid().MatrixProduct(c).add(d).Sigmoid();
+    // //hidden Layer
+    // let a = model.addMatrix(inputs, hidden, Pohhnii.MISC.initArray(inputs * hidden, 0));
+    // let b = model.addMatrix(1, hidden, Pohhnii.MISC.initArray(hidden, 0));
+    // //output layer
+    // let c = model.addMatrix(hidden, outputs, Pohhnii.MISC.initArray(outputs * hidden, 0));
+    // let d = model.addMatrix(1, outputs, Pohhnii.MISC.initArray(outputs, 0));
+    // //Model-Function
+    // model.startWith(x).MatrixProduct(a).add(b).Sigmoid().MatrixProduct(c).add(d).Sigmoid();
     //List of all adjustable Parameters
+    let hiddenLayer, hiddenBias, outputLayer, outputBias;
+    model.startWith(x).DenseLayer({ nodes: hidden }, (w, b) => {
+        hiddenLayer = w;
+        hiddenBias = b;
+    }).Sigmoid().DenseLayer({ nodes: outputs }, (w, b) => {
+        outputLayer = w;
+        outputBias = b;
+    }).Sigmoid();
     let Parameters = [];
-    Parameters.push(...model.getRefMatrix(a).data);
-    Parameters.push(...model.getRefMatrix(b).data);
-    Parameters.push(...model.getRefMatrix(c).data);
-    Parameters.push(...model.getRefMatrix(d).data);
+    Parameters.push(...model.getRefMatrix(hiddenLayer).data);
+    Parameters.push(...model.getRefMatrix(hiddenBias).data);
+    Parameters.push(...model.getRefMatrix(outputLayer).data);
+    Parameters.push(...model.getRefMatrix(outputBias).data);
     return {
         Model: model,
         Parameters,
-        X: x
+        X: x,
+        hiddenLayer, hiddenBias, outputLayer, outputBias
     }
 }
 /**
