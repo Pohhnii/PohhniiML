@@ -1494,10 +1494,29 @@ Pohhnii.MODELS.Genetix = class {
         this.Organism = Organism || [];
         this.fitnessOf = function () { return 0; };
         this.mutate = function (org) { return org; };
+        this.FITTEST_ONLY = 0;
+        this.PREFER_FITTEST = 1;
+        this.CUSTOM_REPRODUCTION = 2;
+        this.reproductionMode = this.FITTEST_ONLY;
+        this.customReproduction = (val) => { return val };
+    }
+    /**
+     * Sets the function for custom-reproduction-Mode.
+     * @param {Function} func 
+     */
+    setCustomReproduction(func) {
+        this.customReproduction = func;
+    }
+    /**
+     * @description Sets the mode of reproduction for the next generation.
+     * @param {Boolean} bool 
+     */
+    setReproductionMode(mode) {
+        this.reproductionMode = mode;
     }
     /**
      * @description Sets the Array of organism
-     * @param {*} organism Array of organism in the genetic Model
+     * @param {Array<*>} organism Array of organism in the genetic Model
      */
     setOrganism(organism) {
         this.Organism = organism;
@@ -1524,7 +1543,7 @@ Pohhnii.MODELS.Genetix = class {
         this.mutate = func;
     }
     /**
-     * @description Does a whole Lifecycle of the Organism. Includes generating a new generation by choosing the fittest organism and mutating that.
+     * @description Does a whole Lifecycle of the Organism. Includes generating a new generation by reproducing the organism and mutating them.
      * @param {Function} func Function for doing the lifecycle and the tasks of the Organism.
      * @returns {Promise}
      */
@@ -1533,10 +1552,26 @@ Pohhnii.MODELS.Genetix = class {
             let lc = new Promise((res, rej) => {
                 func(res, rej);
             }).then(() => {
-                const best = this.getFittest();
-                this.Organism = this.Organism.map((org, index) => {
-                    return (index === 0) ? best : this.mutate(best);
-                });
+                switch (this.reproductionMode) {
+                    case this.FITTEST_ONLY:
+                        const best = this.getFittest();
+                        this.Organism = this.Organism.map((org, index) => {
+                            return (index === 0) ? best : this.mutate(best);
+                        });
+                        break;
+                    case this.PREFER_FITTEST:
+                        let fittest = this.sortFittest();
+                        for (let i = 0; i < fittest.length; i++) {
+                            let amount = Math.floor(1 / (i + 1) * this.Organism.length);
+                            for (let j = 0; j < amount; j++) {
+                                this.Organism[j] = (j === this.Organism.length) ? fittest[0] : this.mutate(fittest[i]);
+                            }
+                        }
+                        break;
+                    case this.CUSTOM_REPRODUCTION:
+                        this.Organism = this.customReproduction(this.Organism);
+                        break;
+                }
                 resolve(this.Organism);
             });
         });
@@ -1547,6 +1582,13 @@ Pohhnii.MODELS.Genetix = class {
      */
     getFittest() {
         return this.Organism.map(val => { return { Organism: val, Fitness: this.fitnessOf(val) }; }).sort((a, b) => { return (a.Fitness > b.Fitness) ? -1 : 1; })[0].Organism;
+    }
+    /**
+     * @description Returns the array of the Organism sorted by their fitness.
+     * @returns {Array<*>}
+     */
+    sortFittest() {
+        return this.Organism.map(val => { return { Organism: val, Fitness: this.fitnessOf(val) }; }).sort((a, b) => { return (a.Fitness > b.Fitness) ? -1 : 1; }).map(val => { return val.Organism; });
     }
 }
 
