@@ -1633,13 +1633,18 @@ Pohhnii.MODELS.LazyModel = class {
     setData(...data) {
         if (Array.isArray(data[0]) && data.length > 1) {
             for (let i = 0; i < data.length; i += 2) {
-                if (this.DATA.every(d => { return data[i] !== d.x })) this.DATA.push({ x: data[i], y: data[i + 1] });
+                if (this.DATA.every(d => { return !Pohhnii.MISC.equalArrays(data[i], d.x) })) this.DATA.push({ x: [...data[i]], y: [...data[i + 1]] });
+                else this.DATA[this.DATA.findIndex(val => { return Pohhnii.MISC.equalArrays(val.x, data[i]) })].y = [...data[i + 1]];
             }
         } else if (Array.isArray(data[0]) && data.length === 1) {
             this.setData(...data[0]);
         } else if (!Array.isArray(data[0])) {
             data.forEach(d => {
-                if (this.DATA.every(dt => { return d.x !== dt.x })) this.DATA.push({ x: d.x, y: d.y });
+                if (this.DATA.every(dt => { return !Pohhnii.MISC.equalArrays(dt.x, d.x) })) {
+                    this.DATA.push({ x: [...d.x], y: [...d.y] });
+                } else {
+                    this.DATA[this.DATA.findIndex(val => { return Pohhnii.MISC.equalArrays(val.x, d.x) })].y = [...d.y];
+                }
             });
         }
     }
