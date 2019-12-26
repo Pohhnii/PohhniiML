@@ -1675,7 +1675,7 @@ Pohhnii.MODELS.LazyModel = class {
     /**
      * @description Calculates the most likely output-vector.
      * @param {Array<Number>} x
-     * @returns {LazyModelDataArray}
+     * @returns {LazyModelData}
      */
     predict(x) {
         if (x.length !== this.inputDimensions) throw console.error('The dimensions of the input do not fit with the Model!');
