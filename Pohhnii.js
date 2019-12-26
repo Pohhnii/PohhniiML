@@ -1633,13 +1633,13 @@ Pohhnii.MODELS.LazyModel = class {
     setData(...data) {
         if (Array.isArray(data[0]) && data.length > 1) {
             for (let i = 0; i < data.length; i += 2) {
-                this.DATA.push({ x: data[i], y: data[i + 1] });
+                if (this.DATA.every(d => { return data[i] !== d.x })) this.DATA.push({ x: data[i], y: data[i + 1] });
             }
         } else if (Array.isArray(data[0]) && data.length === 1) {
             this.setData(...data[0]);
         } else if (!Array.isArray(data[0])) {
             data.forEach(d => {
-                this.DATA.push({ x: d.x, y: d.y });
+                if (this.DATA.every(dt => { return d.x !== dt.x })) this.DATA.push({ x: d.x, y: d.y });
             });
         }
     }
