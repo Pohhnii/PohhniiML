@@ -787,6 +787,24 @@ Pohhnii.MISC.initArray = function (length, value) {
     return arr;
 }
 /**
+ * @description Checks if the arrays are equally in elements and order.
+ * @param {Array} a
+ * @param {Array} b
+ * @returns {Boolean}
+ */
+Pohhnii.MISC.equalArrays = function (a, b) {
+    return a.every((val, index) => { return val === b[index] });
+}
+/**
+ * @description Calculates the distance between two vectors represented by arrays.
+ * @param {Array<Number>} a
+ * @param {Array<Number>} b
+ * @returns {Number} distance
+ */
+Pohhnii.MISC.distance = function (a, b) {
+    return Math.sqrt(a.reduce((prev, cur, index) => { return Math.pow(cur - b[index], 2) + prev }, 0));
+}
+/**
  * @description MatrixFunction for Matrix Math.
  */
 Pohhnii.MODELS.ReferenceFunctions.MatrixFunction = class {
@@ -1589,6 +1607,111 @@ Pohhnii.MODELS.Genetix = class {
      */
     sortFittest() {
         return this.Organism.map(val => { return { Organism: val, Fitness: this.fitnessOf(val) }; }).sort((a, b) => { return (a.Fitness > b.Fitness) ? -1 : 1; }).map(val => { return val.Organism; });
+    }
+}
+/**
+ * @description Model which 'learns' by saving the data ('Lazy-Learning').
+ * @typedef {Array<LazyModelData>} LazyModelDataArray
+ * @typedef {Object} LazyModelData
+ * @property {Array<Number>} x
+ * @property {Array<Number>} y
+ */
+Pohhnii.MODELS.LazyModel = class {
+    /**
+     * @param {Number} inputDimensions 
+     * @param {Number} outputDimensions 
+     */
+    constructor(inputDimensions, outputDimensions) {
+        this.DATA = [];
+        this.inputDimensions = inputDimensions;
+        this.outputDimensions = outputDimensions;
+    }
+    /**
+     * @description Saves the data in the Model for later predictions.
+     * @param {...Array<Number>|...LazyModelDataArray} data
+     */
+    setData(...data) {
+        if (Array.isArray(data[0]) && data.length > 1) {
+            for (let i = 0; i < data.length; i += 2) {
+                this.DATA.push({ x: data[i], y: data[i + 1] });
+            }
+        } else if (Array.isArray(data[0]) && data.length === 1) {
+            this.setData(...data[0]);
+        } else if (!Array.isArray(data[0])) {
+            data.forEach(d => {
+                this.DATA.push({ x: d.x, y: d.y });
+            });
+        }
+    }
+    /**
+     * @description Returns the output-value corresponding to the input-value. If no parameter is given, the function will return the whole Array.
+     * @param {Array<Number>|null} x 
+     */
+    getData(x) {
+        return (x || typeof x !== 'undefined') ? this.DATA.find(val => { return Pohhnii.MISC.equalArrays(val.x, x); }) : this.DATA;
+    }
+    /**
+     * @description Returns the nearest neighbor to the input vector.
+     * @param {Array<Number>} x 
+     * @returns {LazyModelData} nearest neighbor
+     */
+    nearestNeighbor(x) {
+        if (x.length !== this.inputDimensions) throw console.error('The dimensions of the input do not fit with the Model!');
+        return this.DATA.reduce((pv, cv, index) => {
+            return (Pohhnii.MISC.distance(pv.x, x) > Pohhnii.MISC.distance(cv.x, x)) ? cv : pv;
+        });
+    }
+    /**
+     * @description k-nearest-neighbor. Returns a sorted array with the closest input-vector in the beginning.
+     * @param {Array<Number>} x 
+     * @returns {LazyModelDataArray} k-nearest-neighbor
+     */
+    knn(x) {
+        if (x.length !== this.inputDimensions) throw console.error('The dimensions of the input do not fit with the Model!');
+        return this.DATA.sort((a, b) => {
+            return (Pohhnii.MISC.distance(b.x, x) > Pohhnii.MISC.distance(a.x, x)) ? 1 : -1;
+        });
+    }
+    /**
+     * @description Calculates the most likely output-vector.
+     * @param {Array<Number>} x
+     * @returns {LazyModelDataArray}
+     */
+    predict(x) {
+        if (x.length !== this.inputDimensions) throw console.error('The dimensions of the input do not fit with the Model!');
+        let datapoint = this.getData(x);
+        if (datapoint) return datapoint;
+        let ds = this.DATA.map(val => { return 1 / Pohhnii.MISC.distance(val.x, x) });
+        return { x, y: Pohhnii.MISC.initArray(this.outputDimensions, i => (this.DATA.reduce((pv, cv, ci) => pv + cv.y[i] * ds[ci], 0) / ds.reduce((pv, cv) => pv + cv, 0))) };
+    }
+    /**
+     * @description Returns an object representing the model.
+     * @returns {LazyModelObject} Model-Representation
+     * @typedef {Object} LazyModelObject
+     * @property {Number} inputDimensions
+     * @property {Number} outputDimensions
+     * @property {LazyModelDataArray} DATA
+     */
+    ModelObject() {
+        return { inputDimensions: this.inputDimensions, outputDimensions: this.outputDimensions, DATA: this.DATA };
+    }
+    /**
+     * @description Returns the Model-Object converted to a string.
+     * @returns {String} Model-Representation
+     */
+    ModelString() {
+        return JSON.stringify(this.ModelObject(), null, 5);
+    }
+    /**
+     * @description Loads a Model from a Model-Representation.
+     * @param {LazyModelObject|String} model 
+     * @returns {LazyModel} Model
+     */
+    static loadModel(model) {
+        let m = (typeof model === 'string') ? JSON.parse(model) : model;
+        let Model = new this(m.inputDimensions, m.outputDimensions);
+        Model.DATA = m.DATA;
+        return Model;
     }
 }
 
