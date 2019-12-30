@@ -798,11 +798,48 @@ Pohhnii.MISC.equalArrays = function (a, b) {
 /**
  * @description Calculates the distance between two vectors represented by arrays.
  * @param {Array<Number>} a
- * @param {Array<Number>} b
+ * @param {Array<Number>} [b=optional]
  * @returns {Number} distance
  */
 Pohhnii.MISC.distance = function (a, b) {
+    if (!b || typeof b === 'undefined') return Math.sqrt(a.reduce((prev, cur) => { return Math.pow(cur, 2) + prev }, 0));
     return Math.sqrt(a.reduce((prev, cur, index) => { return Math.pow(cur - b[index], 2) + prev }, 0));
+}
+/**
+ * @description Returns the unit vector. The length of the vector will be one.
+ * @param {Array<Number>} vector
+ * @returns {Array<Number>} unit vector
+ */
+Pohhnii.MISC.unitVector = function (vector) {
+    let d = Pohhnii.MISC.distance(vector);
+    return vector.map(val => { return val / d; });
+}
+/**
+ * @description Calculates the scalar product between two vectors.
+ * @param {Array<Number>} a
+ * @param {Array<Number>} b
+ * @returns {Number} scalar
+ */
+Pohhnii.MISC.scalarProduct = function (a, b) {
+    return a.reduce((prev, cur, index) => { return prev + cur * b[index] }, 0);
+}
+/**
+ * @description Adds two vectors.
+ * @param {Array<Number>} a
+ * @param {Array<Number>} b
+ * @returns {Array<Number>}
+ */
+Pohhnii.MISC.addVector = function (a, b) {
+    return a.map((val, index) => { return val + b[index] });
+}
+/**
+ * @description Subtracts two vectors.
+ * @param {Array<Number>} a
+ * @param {Array<Number>} b
+ * @returns {Array<Number>}
+ */
+Pohhnii.MISC.subtractVector = function (a, b) {
+    return a.map((val, index) => { return val - b[index] });
 }
 /**
  * @description MatrixFunction for Matrix Math.
