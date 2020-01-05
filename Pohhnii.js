@@ -1757,5 +1757,96 @@ Pohhnii.MODELS.LazyModel = class {
     }
 }
 
+/**
+ * @description Q-Table for Reinforcement Learning.
+ */
+Pohhnii.MODELS.QTable = class {
+    /**
+     * @param {Array<QTableObject>} [Table=optional] 
+     * @param {Number} [LEARNRATE=optional]
+     * @param {Number} [DISCOUNTFACTOR=optional] 
+     * @param {Number} [RANDOMEXPLORE=optional]
+     * @typedef {Object} QTableObject
+     * @property {Array<Number>} state
+     * @property {Array<Number>} action
+     */
+    constructor(Table, LEARNRATE, DISCOUNTFACTOR, RANDOMEXPLORE) {
+        this.Table = Table || [];
+        this.LEARNRATE = LEARNRATE || 0.1;
+        this.DISCOUNTFACTOR = DISCOUNTFACTOR || 0;
+        this.RANDOMEXPLORE = RANDOMEXPLORE || 0;
+    }
+    /**
+     * @description Sets the Learnrate.
+     * @param {Number} lr 
+     */
+    setLearnRate(lr) { this.LEARNRATE = lr }
+    /**
+     * @description Sets the Discount-Factor
+     * @param {Number} df 
+     */
+    setDiscountFactor(df) { this.DISCOUNTFACTOR = df }
+    /**
+     * @description Sets the propability of randomly exploring a different decision.
+     * @param {Number} re 
+     */
+    setRandomExplore(re) { this.RANDOMEXPLORE = re }
+    /**
+     * @description Returns the QTable-Array
+     * @returns {Array<QTableObject>}
+     */
+    getTable() { return this.Table }
+    /**
+     * @description Sets the action-rewards of a given state.
+     * @param {Array<Number>} state 
+     * @param {Array<Number>} action 
+     */
+    setState(state, action) {
+        let obj = this.getState([...state]);
+        if (typeof obj !== 'undefined') obj.action = [...action];
+        else this.Table.push({ state: [...state], action: [...action] });
+    }
+    /**
+     * @description Returns the QTable-Object of the given state.
+     * @param {Array<Number>} state 
+     * @returns {QTableObject}
+     */
+    getState(state) {
+        return this.Table.find(val => Pohhnii.MISC.equalArrays(state, val.state));
+    }
+    /**
+     * @description Returns the index and action-reward of the given state.
+     * @param {Array<Number>} state 
+     * @returns {QTableAction}
+     * @typedef {Object} QTableAction
+     * @property {Number} index
+     * @property {Number} value
+     */
+    getAction(state) {
+        return this.getState(state).action.reduce((pv, cv, i) => { return (cv > pv.value) ? { index: i, value: cv } : pv }, { index: -1, value: -Infinity });
+    }
+    /**
+     * @description Updates the rewards of the Q-Table.
+     * @param {Array<Number>} currentState 
+     * @param {QTableRewardFunction} reward 
+     * @param {QTableActionFunction} newState
+     * @returns {null}
+     * @typedef {Function} QTableActionFunction
+     * @param {QTableAction} action
+     * @returns {Array<Number>} new State
+     * @typedef {Function} QTableRewardFunction
+     * @param {Array<Number>} newState
+     * @param {QTableAction} oldAction
+     */
+    timeStep(currentState, newState, reward) {
+        let State = this.getState(currentState);
+        let actionIndex = ((Math.random() > this.RANDOMEXPLORE) ? State.action.reduce((pv, cv, i) => { return (cv > pv.value) ? { index: i, value: cv } : pv }, { index: -1, value: -Infinity }).index : Math.floor(Math.random() * State.action.length));
+        let ActionObject = { index: actionIndex, value: State.action[actionIndex] };
+        let nState = newState(ActionObject);
+        let nAction = this.getAction(nState);
+        State.action[actionIndex] += this.LEARNRATE * (reward(nState, ActionObject) + this.DISCOUNTFACTOR * nAction.value - State.action[actionIndex]);
+    }
+}
+
 //Exporting the Library
 if (typeof module !== 'undefined' && module.exports) module.exports = Pohhnii;
