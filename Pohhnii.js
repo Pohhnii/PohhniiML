@@ -105,6 +105,14 @@ Pohhnii.MISC.shapeArray = function (array, shape) {
     return arr;
 }
 /**
+ * @description Returns the shape of an array. The dimensions are returned in a flat array.
+ * @param {Array} array
+ * @returns {Array}
+ */
+Pohhnii.MISC.getShape = function (array) {
+    return (Array.isArray(array[0])) ? [array.length, ...this.getShape(array[0])] : [array.length];
+}
+/**
  * @description Generates a Universal Unique Identifier (UUID).
  * @returns {String} UUID
  */
