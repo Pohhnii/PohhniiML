@@ -1894,7 +1894,9 @@ Pohhnii.MODELS.Layers.Matrix = class extends Array {
      * @returns {Pohhnii.MODELS.Layers.Matrix}
      */
     static createMatrix(shape, data) {
-        return new this(Pohhnii.MISC.shapeArray(data, shape)[0]);
+        if (Array.isArray(data)) return new this(Pohhnii.MISC.shapeArray(data, shape)[0]);
+        else if (typeof data === "number") return new this(Pohhnii.MISC.shapeArray(Pohhnii.MISC.initArray(shape[0] * shape[1], data), shape)[0]);
+        else return new this(Pohhnii.MISC.shapeArray(Pohhnii.MISC.initArray(shape[0] * shape[1], 0), shape)[0]);
     }
     /**
      * @description Getter for the the Matrix as a String.
