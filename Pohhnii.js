@@ -1895,7 +1895,7 @@ Pohhnii.MODELS.Layers.Matrix = class extends Array {
      */
     static createMatrix(shape, data) {
         if (Array.isArray(data)) return new this(Pohhnii.MISC.shapeArray(data, shape)[0]);
-        else if (typeof data === "number") return new this(Pohhnii.MISC.shapeArray(Pohhnii.MISC.initArray(shape[0] * shape[1], data), shape)[0]);
+        else if (typeof data === "number" || typeof data === 'function') return new this(Pohhnii.MISC.shapeArray(Pohhnii.MISC.initArray(shape[0] * shape[1], data), shape)[0]);
         else return new this(Pohhnii.MISC.shapeArray(Pohhnii.MISC.initArray(shape[0] * shape[1], 0), shape)[0]);
     }
     /**
@@ -2099,6 +2099,155 @@ Pohhnii.MODELS.Layers.Matrix = class extends Array {
             }
         }
         return new Pohhnii.MODELS.Layers.Matrix(data);
+    }
+}
+
+/**
+ * @description Container for differnet Layers.
+ */
+Pohhnii.MODELS.Layers.LayerContainer = class extends Array {
+    /**
+     * @param {Array<Layer>} [layers=optional]
+     */
+    constructor(layers) {
+        super();
+        if (layers && typeof layers !== 'undefined') {
+            if (layers.length > 0) layers.forEach(layer => {
+                this.addLayer(layer.Type, layer);
+            });
+        }
+    }
+    /**
+     * @description Adds an Layer.
+     * @param {('Dense'|'Sigmoid'|'TanH'|'LeakyReLu'|'ReLu')|Layer} LayerType
+     * @param {Object} data
+     * @typedef {Object} Layer
+     * @property {String} Type
+     * @property {Function} feedForward
+     * @property {Function} backPropagate
+     */
+    addLayer(LayerType, data) {
+        if (typeof LayerType !== 'string') this[this.length] = LayerType;
+        else this[this.length] = new Pohhnii.MODELS.Layers.LayerTypes[LayerType](data, this);
+        return this;
+    }
+    /**
+     * @description Does the feed-forward-process and calculates a prediction of the model.
+     * @param {Pohhnii.MODELS.Layers.Matrix} x 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    feedForward(x) {
+        let value = new Pohhnii.MODELS.Layers.Matrix(x);
+        this.forEach(layer => {
+            value = layer.feedForward(value);
+        });
+        return value;
+    }
+    /**
+     * @description Does the backpropagation and adjusts the parameter in the layers.
+     * @param {Pohhnii.MODELS.Layers.Matrix} x 
+     * @param {Pohhnii.MODELS.Layers.Matrix} y 
+     * @returns {Number} error
+     */
+    backPropagate(x, y) {
+        let values = [new Pohhnii.MODELS.Layers.Matrix(x)];
+        this.forEach(layer => {
+            values.push(layer.feedForward(values[values.length - 1]));
+        });
+        const error = values[values.length - 1].sub(new Pohhnii.MODELS.Layers.Matrix(y));
+        let lastError = error.copy();
+        for (let i = this.length - 1; i >= 0; i--) {
+            lastError = this[i].backPropagate(values[i], lastError).copy();
+        }
+        return error;
+    }
+}
+/**
+ * @description Object with the differnt Layers for the LayerContainer.
+ */
+Pohhnii.MODELS.Layers.LayerTypes = {
+    "Dense": class extends Object {
+        constructor(data, lc) {
+            super();
+            this.Type = "Dense";
+            this.inputs = (lc.length > 0) ? lc[lc.length - 1].nodes : data.inputs;
+            this.nodes = data.nodes;
+            this.weights = data.weights || Pohhnii.MODELS.Layers.Matrix.createMatrix([this.inputs, this.nodes], Math.random);
+            this.bias = data.bias || Pohhnii.MODELS.Layers.Matrix.createMatrix([1, this.nodes], Math.random);
+            this.LearnRate = data.LearnRate || 0.1;
+            this.weights = new Pohhnii.MODELS.Layers.Matrix(this.weights);
+            this.bias = new Pohhnii.MODELS.Layers.Matrix(this.bias);
+        }
+        feedForward(x) {
+            return x.mult(this.weights).add(this.bias);
+        }
+        backPropagate(x, error) {
+            const oldWeights = this.weights.copy();
+            this.weights = oldWeights.sub(x.transpose().mult(error).elementwise(val => val * this.LearnRate));
+            this.bias = this.bias.sub(error.elementwise(val => this.LearnRate * val));
+            return error.mult(oldWeights.transpose());
+        }
+    },
+    "Sigmoid": class extends Object {
+        constructor(data, lc) {
+            super();
+            this.Type = "Sigmoid";
+            this.shape = (lc.length > 0) ? lc[lc.length - 1].shape : data.shape;
+            this.inputs = (lc.length > 0) ? lc[lc.length - 1].nodes : data.inputs;
+            this.nodes = this.inputs;
+        }
+        feedForward(x) {
+            return x.elementwise(val => (1 / (1 + Math.exp(-val))));
+        }
+        backPropagate(x, error) {
+            return error.HadamardProduct(this.feedForward(x).elementwise(val => val * (1 - val)));
+        }
+    },
+    "TanH": class extends Object {
+        constructor(data, lc) {
+            super();
+            this.Type = "TanH";
+            this.shape = (lc.length > 0) ? lc[lc.length - 1].shape : data.shape;
+            this.inputs = (lc.length > 0) ? lc[lc.length - 1].nodes : data.inputs;
+            this.nodes = this.inputs;
+        }
+        feedForward(x) {
+            return x.elementwise(Math.tanh);
+        }
+        backPropagate(x, error) {
+            return error.HadamardProduct(this.feedForward(x).elementwise(val => val * (1 - val)));
+        }
+    },
+    "ReLu": class extends Object {
+        constructor(data, lc) {
+            super();
+            this.Type = "ReLu";
+            this.shape = (lc.length > 0) ? lc[lc.length - 1].shape : data.shape;
+            this.inputs = (lc.length > 0) ? lc[lc.length - 1].nodes : data.inputs;
+            this.nodes = this.inputs;
+        }
+        feedForward(x) {
+            return x.elementwise(val => (val > 0) ? val : 0);
+        }
+        backPropagate(x, error) {
+            return error.HadamardProduct(this.feedForward(x).elementwise(val => (val > 0) ? 1 : 0));
+        }
+    },
+    "LeakyReLu": class extends Object {
+        constructor(data, lc) {
+            super();
+            this.Type = "LeakyReLu";
+            this.shape = (lc.length > 0) ? lc[lc.length - 1].shape : data.shape;
+            this.inputs = (lc.length > 0) ? lc[lc.length - 1].nodes : data.inputs;
+            this.nodes = this.inputs;
+            this.factor = (data) ? (data.factor) ? data.factor : 0.5 : 0.5;
+        }
+        feedForward(x) {
+            return x.elementwise(val => (val > 0) ? val : val * this.factor);
+        }
+        backPropagate(x, error) {
+            return error.HadamardProduct(this.feedForward(x).elementwise(val => (val > 0) ? 1 : this.factor));
+        }
     }
 }
 
