@@ -45,6 +45,11 @@ Pohhnii.MODELS.ReferenceFunctions = {};
 Pohhnii.MODELS.ReferenceFunctions.Presets = {};
 
 /**
+ * @description Object for the Layer-Models.
+ */
+Pohhnii.MODELS.Layers = {};
+
+/**
  * @description Shuffles the elements of an Array randomly.
  * @param {Array} array
  * @returns {Array} shuffled-Array
@@ -848,6 +853,20 @@ Pohhnii.MISC.addVector = function (a, b) {
  */
 Pohhnii.MISC.subtractVector = function (a, b) {
     return a.map((val, index) => { return val - b[index] });
+}
+/**
+ * @description Swaps to elements of an array.
+ * @param {Array} array
+ * @param {Number} index1
+ * @param {Number} index2
+ * @returns {Array}
+ */
+Pohhnii.MISC.swap = function (array, index1, index2) {
+    const i2 = array[index2];
+    let newArr = [...array];
+    newArr[index2] = newArr[index1];
+    newArr[index1] = i2;
+    return newArr;
 }
 /**
  * @description MatrixFunction for Matrix Math.
@@ -1853,6 +1872,213 @@ Pohhnii.MODELS.QTable = class {
         let nState = newState(ActionObject);
         let nAction = this.getAction(nState);
         State.action[actionIndex] += this.LEARNRATE * (reward(nState, ActionObject) + this.DISCOUNTFACTOR * nAction.value - State.action[actionIndex]);
+    }
+}
+/**
+* @description Matrix class which extends from the Array class.
+*/
+Pohhnii.MODELS.Layers.Matrix = class extends Array {
+    /**
+     * @param {Array<Array<Number>>|Array<Number>} data 
+     */
+    constructor(data) {
+        let sl = Pohhnii.MISC.getShape(data).length;
+        if (sl === 1) data = [data];
+        if (sl !== 2 && sl !== 1) throw console.error('A Matrix can only have two dimensions!');
+        super(...data);
+    }
+    /**
+     * @description Creates a Matrix with a given shape and the flat data.
+     * @param {Array<Number>} shape 
+     * @param {Array<Number>} data 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    static createMatrix(shape, data) {
+        return new this(Pohhnii.MISC.shapeArray(data, shape)[0]);
+    }
+    /**
+     * @description Getter for the the Matrix as a String.
+     */
+    get string() {
+        return JSON.stringify(this);
+    }
+    /**
+     * @description Getter for the the shape of the Matrix.
+     * @returns {Array<Number>}
+     */
+    get shape() {
+        return Pohhnii.MISC.getShape(this);
+    }
+    /**
+     * @description Getter for the the data in a flat array.
+     * @returns {Array<Number>}
+     */
+    get flat() {
+        return Pohhnii.MISC.toOneDimension([...this]);
+    }
+    /**
+     * @description Getter for the the length of the data.
+     * @returns {Number}
+     */
+    get items() {
+        return this.flat.length;
+    }
+    /**
+     * @description Getter for the the number of rows.
+     * @returns {Number}
+     */
+    get rows() {
+        return this.shape[0];
+    }
+    /**
+     * @description Getter for the the number of columns.
+     * @returns {Number}
+     */
+    get columns() {
+        return this.shape[1];
+    }
+    /**
+     * @description Returns the transposed Matrix.
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    transpose() {
+        let data = [];
+        const shape = this.shape;
+        for (let i = 0; i < shape[1]; i++) {
+            for (let j = 0; j < shape[0]; j++) {
+                data.push(this[j][i]);
+            }
+        }
+        return Pohhnii.MODELS.Layers.Matrix.createMatrix(shape.reverse(), data);
+    }
+    /**
+     * @description Adds a Matrix.
+     * @param {Pohhnii.MODELS.Layers.Matrix} matrix 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    add(matrix) {
+        const shape = this.shape;
+        if (!Pohhnii.MISC.equalArrays(shape, matrix.shape)) throw console.error('The shapes of the matrices are not equal!');
+        const mflat = matrix.flat;
+        return Pohhnii.MODELS.Layers.Matrix.createMatrix(shape, this.flat.map((val, index) => val + mflat[index]));
+    }
+    /**
+     * @description Subtracts a Matrix.
+     * @param {Pohhnii.MODELS.Layers.Matrix} matrix 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    sub(matrix) {
+        const shape = this.shape;
+        if (!Pohhnii.MISC.equalArrays(shape, matrix.shape)) throw console.error('The shapes of the matrices are not equal!');
+        const mflat = matrix.flat;
+        return Pohhnii.MODELS.Layers.Matrix.createMatrix(shape, this.flat.map((val, index) => val - mflat[index]));
+    }
+    /**
+     * @description Multiplies a Matrix with the current (dot-product).
+     * @param {Pohhnii.MODELS.Layers.Matrix} matrix 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    mult(matrix) {
+        const tshape = this.shape;
+        const mshape = matrix.shape;
+        if (tshape[1] !== mshape[0]) throw console.error('The number of columns must equal the number of rows of the multiplying matrix!');
+        let data = [];
+        let transposed = matrix.transpose();
+        this.forEach(row => {
+            transposed.forEach(r => {
+                data.push(r.reduce((prev, cur, index) => prev + cur * row[index], 0));
+            });
+        });
+        return Pohhnii.MODELS.Layers.Matrix.createMatrix([tshape[0], mshape[1]], data);
+    }
+    /**
+     * @description Multiplies each element with a number.
+     * @param {Number} number 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    multiplyBy(number) {
+        return this.map(row => row.map(val => number * val));
+    }
+    static unitMatrix(n) {
+        return new Pohhnii.MODELS.Layers.Matrix(Pohhnii.MISC.initArray(n, row => Pohhnii.MISC.initArray(n, col => ((col === row) ? 1 : 0))));
+    }
+    /**
+     * @description
+     * @param {Number} power 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    pow(power) {
+        const shape = this.shape;
+        if (shape[0] !== shape[1]) throw console.error('The Matrix as to be quadratic');
+        if (power === 0) return Pohhnii.MODELS.Layers.Matrix.unitMatrix(shape[0]);
+        if (power < 0) return this.inverse().pow(Math.abs(power));
+        return this.pow(power - 1).mult(this);
+    }
+    /**
+     * @description Applies the function elemtwise to the matrix.
+     * @param {Function} func (value, row, column) => value
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    elementwise(func) {
+        const shape = this.shape;
+        const data = this.flat.map((val, index) => {
+            const col = index % shape[1];
+            const row = (index - col) / shape[1];
+            return func(val, row, col);
+        });
+        return Pohhnii.MODELS.Layers.Matrix.createMatrix(this.shape, data);
+    }
+    /**
+     * @description Returns the inverse Matrix.
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    inverse() {
+        return Pohhnii.MODELS.Layers.Matrix.GaussJordan(this, Pohhnii.MODELS.Layers.Matrix.unitMatrix(this.rows));
+    }
+    /**
+     * @description Makes a duplicate of the matrix.
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    copy() {
+        let rows = [];
+        this.forEach(row => { rows.push([...row]) });
+        return new Pohhnii.MODELS.Layers.Matrix(rows);
+    }
+    /**
+     * @description The Gauss-Jordan-Algorithm.
+     * @param {Pohhnii.MODELS.Layers.Matrix} coeff 
+     * @param {Pohhnii.MODELS.Layers.Matrix} values 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    static GaussJordan(coeff, values) {
+        const cshape = coeff.shape;
+        const vshape = values.shape;
+        let cm = coeff.copy();
+        let vm = values.copy();
+        if (cshape[0] !== cshape[1]) throw console.error('The Matrix has to be quadratic!');
+        if (cshape[0] !== vshape[0]) throw console.error('The number of rows must equal!');
+        for (let i = 0; i < cshape[1]; i++) {
+            while (cm[i][i] === 0) {
+                cm = new Pohhnii.MODELS.Layers.Matrix(Pohhnii.MISC.swap(cm, i, i + 1));
+                vm = new Pohhnii.MODELS.Layers.Matrix(Pohhnii.MISC.swap(vm, i, i + 1));
+            }
+            let firstVal = cm[i][i];
+            cm[i].forEach((val, index) => { cm[i][index] = val / firstVal });
+            vm[i].forEach((val, index) => { vm[i][index] = val / firstVal });
+            for (let j = i + 1; j < cshape[0]; j++) {
+                const factor = cm[j][i];
+                cm[j].forEach((val, index) => { cm[j][index] -= cm[i][index] * factor; });
+                vm[j].forEach((val, index) => { vm[j][index] -= vm[i][index] * factor; });
+            }
+        }
+        for (let col = cshape[1] - 1; col >= 0; col--) {
+            for (let row = col - 1; row >= 0; row--) {
+                const factor = cm[row][col];
+                cm[row].forEach((val, index) => { cm[row][index] -= cm[col][index] * factor });
+                vm[row].forEach((val, index) => { vm[row][index] -= vm[col][index] * factor });
+            }
+        }
+        return vm;
     }
 }
 
