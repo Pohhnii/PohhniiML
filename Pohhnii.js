@@ -2082,6 +2082,24 @@ Pohhnii.MODELS.Layers.Matrix = class extends Array {
         }
         return vm;
     }
+    /**
+     * @description The Hadamard-Product - Elementwise multiplication.
+     * @param {Pohhnii.MODELS.Layers.Matrix} matrix 
+     * @returns {Pohhnii.MODELS.Layers.Matrix}
+     */
+    HadamardProduct(matrix) {
+        const tshape = this.shape;
+        const mshape = matrix.shape;
+        if (!Pohhnii.MISC.equalArrays(tshape, mshape)) throw console.error('The shape of the matrices must equal!');
+        let data = [];
+        for (let i = 0; i < tshape[0]; i++) {
+            data[i] = [];
+            for (let j = 0; j < tshape[1]; j++) {
+                data[i][j] = this[i][j] * matrix[i][j];
+            }
+        }
+        return new Pohhnii.MODELS.Layers.Matrix(data);
+    }
 }
 
 //Exporting the Library
