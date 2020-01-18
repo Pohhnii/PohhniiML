@@ -1579,7 +1579,7 @@ Pohhnii.MODELS.Genetix = class {
         this.FITTEST_ONLY = 0;
         this.PREFER_FITTEST = 1;
         this.CUSTOM_REPRODUCTION = 2;
-        this.reproductionMode = this.FITTEST_ONLY;
+        this.reproductionMode = 'FITTEST_ONLY';
         this.customReproduction = (val) => { return val };
     }
     /**
@@ -1591,7 +1591,7 @@ Pohhnii.MODELS.Genetix = class {
     }
     /**
      * @description Sets the mode of reproduction for the next generation.
-     * @param {Boolean} bool 
+     * @param {('FITTEST_ONLY'|'PREFER_FITTEST'|'CUSTOM_REPRODUCTION')} mode 
      */
     setReproductionMode(mode) {
         this.reproductionMode = mode;
@@ -1635,13 +1635,13 @@ Pohhnii.MODELS.Genetix = class {
                 func(res, rej);
             }).then(() => {
                 switch (this.reproductionMode) {
-                    case this.FITTEST_ONLY:
+                    case 'FITTEST_ONLY':
                         const best = this.getFittest();
                         this.Organism = this.Organism.map((org, index) => {
                             return (index === 0) ? best : this.mutate(best);
                         });
                         break;
-                    case this.PREFER_FITTEST:
+                    case 'PREFER_FITTEST':
                         let fittest = this.sortFittest();
                         for (let i = 0; i < fittest.length; i++) {
                             let amount = Math.floor(1 / (i + 1) * this.Organism.length);
@@ -1650,7 +1650,7 @@ Pohhnii.MODELS.Genetix = class {
                             }
                         }
                         break;
-                    case this.CUSTOM_REPRODUCTION:
+                    case 'CUSTOM_REPRODUCTION':
                         this.Organism = this.customReproduction(this.Organism);
                         break;
                 }
@@ -2119,7 +2119,7 @@ Pohhnii.MODELS.Layers.LayerContainer = class extends Array {
     }
     /**
      * @description Adds an Layer.
-     * @param {('Dense'|'Sigmoid'|'TanH'|'LeakyReLu'|'ReLu')|Layer} LayerType
+     * @param {('Dense'|'Sigmoid'|'TanH'|'LeakyReLu'|'ReLu'|'Recurrent')|Layer} LayerType
      * @param {Object} data
      * @typedef {Object} Layer
      * @property {String} Type
@@ -2161,6 +2161,23 @@ Pohhnii.MODELS.Layers.LayerContainer = class extends Array {
         }
         return error;
     }
+    /**
+     * @description Resets Layers.
+     * @param {Number} [index=optional] 
+     */
+    resetLayer(index) {
+        if (typeof index === 'number') this[index].reset();
+        else this.forEach(layer => {
+            layer.reset();
+        });
+    }
+    /**
+     * @description Creates a copy of this model.
+     * @returns {Pohhnii.MODELS.Layers.LayerContainer}
+     */
+    copy() {
+        return new Pohhnii.MODELS.Layers.LayerContainer(JSON.parse(JSON.stringify(this)));
+    }
 }
 /**
  * @description Object with the differnt Layers for the LayerContainer.
@@ -2187,6 +2204,7 @@ Pohhnii.MODELS.Layers.LayerTypes = {
             this.bias = this.bias.sub(error.elementwise(val => this.LearnRate * val));
             return error.mult(oldWeights.transpose());
         }
+        reset() { };
     },
     "Sigmoid": class extends Object {
         constructor(data, lc) {
@@ -2202,6 +2220,7 @@ Pohhnii.MODELS.Layers.LayerTypes = {
         backPropagate(x, error) {
             return error.HadamardProduct(this.feedForward(x).elementwise(val => val * (1 - val)));
         }
+        reset() { };
     },
     "TanH": class extends Object {
         constructor(data, lc) {
@@ -2217,6 +2236,7 @@ Pohhnii.MODELS.Layers.LayerTypes = {
         backPropagate(x, error) {
             return error.HadamardProduct(this.feedForward(x).elementwise(val => val * (1 - val)));
         }
+        reset() { };
     },
     "ReLu": class extends Object {
         constructor(data, lc) {
@@ -2232,6 +2252,7 @@ Pohhnii.MODELS.Layers.LayerTypes = {
         backPropagate(x, error) {
             return error.HadamardProduct(this.feedForward(x).elementwise(val => (val > 0) ? 1 : 0));
         }
+        reset() { };
     },
     "LeakyReLu": class extends Object {
         constructor(data, lc) {
@@ -2247,6 +2268,35 @@ Pohhnii.MODELS.Layers.LayerTypes = {
         }
         backPropagate(x, error) {
             return error.HadamardProduct(this.feedForward(x).elementwise(val => (val > 0) ? 1 : this.factor));
+        }
+        reset() { };
+    },
+    "Recurrent": class extends Object {
+        constructor(data, lc) {
+            super();
+            this.Type = "Recurrent";
+            data = data || {};
+            this.inputs = (lc.length > 0) ? lc[lc.length - 1].nodes : data.inputs;
+            this.nodes = this.inputs;
+            this.LearnRate = data.LearnRate || 0.1;
+            this.weights = data.weights || Pohhnii.MODELS.Layers.Matrix.createMatrix([1, this.nodes], Math.random);
+            this.weights = new Pohhnii.MODELS.Layers.Matrix(this.weights);
+            this.currentState;
+            this.lastState;
+            this.reset();
+        }
+        feedForward(x) {
+            this.lastState = this.currentState.copy();
+            this.currentState = x.HadamardProduct(this.weights).copy();
+            return x.add(this.lastState);
+        }
+        backPropagate(x, error) {
+            this.weights = this.weights.sub(x.HadamardProduct(error)).copy();
+            return error;
+        }
+        reset() {
+            this.currentState = new Pohhnii.MODELS.Layers.Matrix([Pohhnii.MISC.initArray(this.nodes, 0)]);
+            this.lastState = new Pohhnii.MODELS.Layers.Matrix([Pohhnii.MISC.initArray(this.nodes, 0)]);
         }
     }
 }
