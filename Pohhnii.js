@@ -2301,5 +2301,12 @@ Pohhnii.MODELS.Layers.LayerTypes = {
     }
 }
 
+Pohhnii.MODELS.PolynomialModel = class extends Array {
+    constructor(param) {
+        if (Array.isArray(param)) super(...param);
+        else super(...Pohhnii.MISC.initArray(param + 1, 0));
+    }
+}
+
 //Exporting the Library
 if (typeof module !== 'undefined' && module.exports) module.exports = Pohhnii;
