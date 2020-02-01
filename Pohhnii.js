@@ -2300,11 +2300,43 @@ Pohhnii.MODELS.Layers.LayerTypes = {
         }
     }
 }
-
+/**
+ * @description Polynomial-Regression Model
+ */
 Pohhnii.MODELS.PolynomialModel = class extends Array {
+    /**
+     * @param {Number|Array} param 
+     */
     constructor(param) {
         if (Array.isArray(param)) super(...param);
         else super(...Pohhnii.MISC.initArray(param + 1, 0));
+        this.LearnRate = 0.1;
+    }
+    /**
+     * @description Returns the grade of the function (highest exponent).
+     * @returns {Number}
+     */
+    get grade() {
+        return this.length - 1;
+    }
+    /**
+     * @description Returns the value of x (f(x)).
+     * @param {Number} x 
+     * @returns {Number}
+     */
+    valueOf(x) {
+        return this.reduce((prev, cur, index) => prev + cur * Math.pow(x, index), 0);
+    }
+    /**
+     * @description Adjusts the Parameter with polynomial regression.
+     * @param {Number} x 
+     * @param {Number} y 
+     */
+    regression(x, y) {
+        const error = this.valueOf(x) - y;
+        this.forEach((val, index) => {
+            this[index] -= Math.pow(x, index) * error * this.LearnRate;
+        });
     }
 }
 
