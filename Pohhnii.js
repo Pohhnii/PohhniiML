@@ -2340,34 +2340,5 @@ Pohhnii.MODELS.PolynomialModel = class extends Array {
     }
 }
 
-Pohhnii.MODELS.SinusoidalModel = class {
-    constructor(obj) {
-        this.A = 1;
-        this.B = 1;
-        this.C = 0;
-        this.D = 0;
-        this.LearnRate = 0.05;
-        if (typeof obj === 'object') {
-            this.A = obj.A || this.A;
-            this.B = obj.B || this.B;
-            this.C = obj.C || this.C;
-            this.D = obj.D || this.D;
-            this.LearnRate = obj.LearnRate || this.LearnRate;
-        }
-    }
-
-    valueOf(x) {
-        return this.A * Math.sin(this.B * x + this.C) + this.D;
-    }
-
-    regression(x, y) {
-        const error = this.valueOf(x) - y;
-        this.A -= Math.sin(this.B * x + this.C) * error * this.LearnRate;
-        this.B -= x * this.A * Math.cos(this.B * x + this.C) * error * this.LearnRate;
-        this.C -= this.A * Math.cos(this.B * x + this.C) * error * this.LearnRate;
-        this.D -= error * this.LearnRate;
-    }
-}
-
 //Exporting the Library
 if (typeof module !== 'undefined' && module.exports) module.exports = Pohhnii;
